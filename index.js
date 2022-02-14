@@ -1,144 +1,148 @@
-const { Client, Intents, MessageActionRow, MessageButton } = require('discord.js');
-const logger = require('pino')({
-    level: 'info',
-    transport: {
-    target: 'pino-pretty'
-    },
- });
+const {
+  Client,
+  Intents,
+  MessageActionRow,
+  MessageButton,
+} = require("discord.js");
+const logger = require("pino")({
+  level: "info",
+  transport: {
+    target: "pino-pretty",
+  },
+});
 const client = new Client({
-	intents: [
+  intents: [
     Intents.FLAGS.GUILDS,
     Intents.FLAGS.GUILD_MESSAGES,
-		Intents.FLAGS.GUILD_MESSAGE_REACTIONS
-	],
+    Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+  ],
 });
 
 let token = process.env.TOKEN;
-if(!token){
-  console.log('Discord TOKEN not set as environment variable.')
-  const readline = require('readline').createInterface({
+if (!token) {
+  console.log("Discord TOKEN not set as environment variable.");
+  const readline = require("readline").createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
-  readline.question('Enter TOKEN: ', inp => {
-    console.log(`Recieved: ${inp}`)
-    logger.info("Logging in...")
+  readline.question("Enter TOKEN: ", (inp) => {
+    console.log(`Recieved: ${inp}`);
+    logger.info("Logging in...");
     client.login(inp);
     readline.close();
   });
 } else {
   client.login(token);
 }
-const channels = ['816246578594840586', '879915120510267412', '892384683273388062'];
-const automessage = '👋 Thank you for your question! Someone from the community will be able to help you soon. 🧡 If you have additional context to share, such as: repo examples, workspace ID, screenshots or videos, feel free to put them under this thread. 👇 It would all help us help you faster. 👐';
+const channels = [
+  "816246578594840586",
+  "879915120510267412",
+  "892384683273388062",
+];
+const automessage =
+  "👋 Thank you for your question! Someone from the community will be able to help you soon. 🧡 If you have additional context to share, such as: repo examples, workspace ID, screenshots or videos, feel free to put them under this thread. 👇 It would all help us help you faster. 👐";
 
-client.once('ready', () => {
-	logger.info(`Logged in as ${client.user.tag}!`);
+client.once("ready", () => {
+  logger.info(`Logged in as ${client.user.tag}!`);
 });
 
-client.on('warn', m => logger.warn(m));
+client.on("warn", (m) => logger.warn(m));
 
-client.on('error', m => logger.error(m));
+client.on("error", (m) => logger.error(m));
 
-client.on('messageCreate', async message => {
-  if(message.content == `<@!${client.user.id}> close`){
+client.on("messageCreate", async (message) => {
+  if (message.content == `<@!${client.user.id}> close`) {
     try {
       const msg = await message.channel.fetchStarterMessage();
-      await msg.react('✅');
-    } catch(error) {
+      await msg.react("✅");
+    } catch (error) {
       logger.error(error);
     }
     try {
       await message.channel.setArchived(true);
-    } catch(error) {
-      logger.error(error)
+    } catch (error) {
+      logger.error(error);
     }
     logger.info(`Archived thread: ${message.channel.name}`);
   }
 
   if (channels.indexOf(message.channelId) > -1 && message.content) {
-		try {
-      const thread = await message.startThread({
-			  name: `"❓- "${message.content.substring(0, 50)}`,
-			  autoArchiveDuration: 1440,
-			  reason: 'Thread automation'
-		  });
-		  const row = new MessageActionRow()
-			  .addComponents(
-				  new MessageButton()
-				  .setCustomId('archive')
-				  .setLabel('Archive 🔒')
-				  .setStyle('SECONDARY'),
-			  );
-		  await thread.send({
-			  content: automessage,
-			  components: [row]
-		  })
-		  logger.info(`Created thread: ${thread.name}`);
-    } catch(error) {
-      logger.error(error)
-    }
-	}
-});
-
-client.on('threadUpdate', async (thread, thread1) => {
-  if (thread.archived == true && thread1.archived == false) {
-    const row = new MessageActionRow()
-			.addComponents(
-				new MessageButton()
-				.setCustomId('archive')
-				.setLabel('Archive 🔒')
-				.setStyle('SECONDARY'),
-			);
-		try {
-      const msg = await thread.fetchStarterMessage();
-      await msg.reactions.removeAll();
-    } catch(error) {
-      logger.error(error);
-    }
     try {
-      const newthread = await thread1.fetch()
-      if(newthread.archived == false){
-        await newthread.send({
-			    content: 'Thread has been unarchived.',
-			    components: [row]
-		    });
-      }
-    } catch(error) {
+      const thread = await message.startThread({
+        name: `"❓- "${message.content.substring(0, 50)}`,
+        autoArchiveDuration: 604800,
+        reason: "Thread automation",
+      });
+      const row = new MessageActionRow().addComponents(
+        new MessageButton()
+          .setCustomId("archive")
+          .setLabel("Archive 🔒")
+          .setStyle("SECONDARY")
+      );
+      await thread.send({
+        content: automessage,
+        components: [row],
+      });
+      logger.info(`Created thread: ${thread.name}`);
+    } catch (error) {
       logger.error(error);
-    
     }
-		logger.info(`Unarchived thread: ${thread.name}`);
   }
 });
 
-client.on('interactionCreate', async interaction => {
-	if (interaction.isButton()) {
-		const row = new MessageActionRow()
-			.addComponents(
-				new MessageButton()
-				.setCustomId('archived')
-				.setLabel('Archived 🔒')
-				.setStyle('SECONDARY')
-				.setDisabled(true),
-			);
+client.on("threadUpdate", async (thread, thread1) => {
+  if (thread.archived == true && thread1.archived == false) {
+    const row = new MessageActionRow().addComponents(
+      new MessageButton()
+        .setCustomId("archive")
+        .setLabel("Archive 🔒")
+        .setStyle("SECONDARY")
+    );
+    try {
+      const msg = await thread.fetchStarterMessage();
+      await msg.reactions.removeAll();
+    } catch (error) {
+      logger.error(error);
+    }
+    try {
+      const newthread = await thread1.fetch();
+      if (newthread.archived == false) {
+        await newthread.send({
+          content: "Thread has been unarchived.",
+          components: [row],
+        });
+      }
+    } catch (error) {
+      logger.error(error);
+    }
+    logger.info(`Unarchived thread: ${thread.name}`);
+  }
+});
 
-		try {
+client.on("interactionCreate", async (interaction) => {
+  if (interaction.isButton()) {
+    const row = new MessageActionRow().addComponents(
+      new MessageButton()
+        .setCustomId("archived")
+        .setLabel("Archived 🔒")
+        .setStyle("SECONDARY")
+        .setDisabled(true)
+    );
+
+    try {
       const msg = await interaction.channel.fetchStarterMessage();
-      await msg.react('✅');
-    } catch(error) {
+      await msg.react("✅");
+    } catch (error) {
       logger.error(error);
     }
     try {
       await interaction.update({
-			  components: [row]
-		  });
+        components: [row],
+      });
       await interaction.channel.setArchived(true);
-    } catch(error) {
-      logger.error(error)
+    } catch (error) {
+      logger.error(error);
     }
-		logger.info(`Archived thread: ${interaction.channel.name}`);
-	}
+    logger.info(`Archived thread: ${interaction.channel.name}`);
+  }
 });
-
-
