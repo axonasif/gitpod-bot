@@ -70,7 +70,7 @@ client.on("messageCreate", async (message) => {
     try {
       const thread = await message.startThread({
         name: `"❓- "${message.content.substring(0, 50)}`,
-        autoArchiveDuration: 604800,
+        autoArchiveDuration: 10080,
         reason: "Thread automation",
       });
       const row = new MessageActionRow().addComponents(
