@@ -34,13 +34,8 @@ if (!token) {
 } else {
   client.login(token);
 }
-const channels = [
-  "816246578594840586",
-  "879915120510267412",
-  "892384683273388062",
-];
-const automessage =
-  "👋 Thank you for your question! Someone from the community will be able to help you soon. 🧡 If you have additional context to share, such as: repo examples, workspace ID, screenshots or videos, feel free to put them under this thread. 👇 It would all help us help you faster. 👐";
+const channels = ["942924201864593490"];
+const automessage = "👋 Thank you for your feedback on our documentation!";
 
 client.once("ready", () => {
   logger.info(`Logged in as ${client.user.tag}!`);
